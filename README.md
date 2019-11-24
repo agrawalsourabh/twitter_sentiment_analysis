@@ -1,6 +1,6 @@
 # JUN Fee Hike </br>
 
-**Twitter Sentiment Analysis*** </br>
+**Twitter Sentiment Analysis** </br>
 
 **Description**</br>
 INDIAN government is going to increase the fees of JNU students. Hundreds of students are protesting in Delhi against fee hike.
