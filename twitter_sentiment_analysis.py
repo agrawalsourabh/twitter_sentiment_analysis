@@ -6,6 +6,12 @@ from openpyxl import load_workbook
 import preprocessor as p
 import re
 import nltk
+import datetime
+from datetime import timedelta, date
+from datetime import datetime
+import pandas as pd
+import pickle
+import json
 
 
 def auth_twitter():
@@ -28,7 +34,7 @@ def get_api(auth):
     return api
 
 
-def get_public_tweets(api, search_query):
+def get_public_tweets(api, search_query, tweet_count):
     """
     Fuction returns the public tweets
     :param api:
@@ -37,8 +43,28 @@ def get_public_tweets(api, search_query):
     """
     # public_tweets = api.search(search_query, count=1000, lang='en')
 
-    public_tweets = tweepy.Cursor(api.search, q=search_query, lang='en').items(1000)
+    public_tweets = tweepy.Cursor(api.search, q=search_query, lang='en').items(tweet_count)
+
     return public_tweets
+
+
+def get_tweet_count_date(api, search_query, max_tweet_count, since, days):
+	count_per_day = []
+	date_list = []
+
+	for single_date in (since + timedelta(n) for n in range(days)):
+		date_list.append(datetime.strftime(single_date.date(), '%b %d'))
+		count = 0
+		next_date = single_date + timedelta(1)
+		tweets = tweepy.Cursor(api.search, q=search_query, lang='en', since=single_date, until=next_date).items(max_tweet_count)
+
+		for tweet in tweets:
+			count = count + 1
+
+		count_per_day.append(count)
+			
+
+	return count_per_day, date_list
 
 
 def display_tweets(public_tweets):
@@ -49,10 +75,9 @@ def display_tweets(public_tweets):
     """
     count = 1
     for tweet in public_tweets:
-        if count < 100:
-            print(tweet.text)
-            analysis = TextBlob(tweet.text)
-            print(analysis.sentiment)
+        if count < 10:
+            print(tweet.created_at)
+            print("=====================")
         else:
             break
 
@@ -136,13 +161,50 @@ def create_file(file_name, public_tweets):
 
 
 if __name__ == '__main__':
-    twitter_auth = auth_twitter()
-    twitter_api = get_api(twitter_auth)
-    twitter_tweets = get_public_tweets(twitter_api, '#standwithjnu')
 
-    # print(len(twitter_tweets))
+	search_query = '#standwithjnu OR #JNUFeeHike OR #JNUProtests OR #Jnu'
 
-    # Displaying first 100 tweets
-    # display_tweets(twitter_tweets)
 
-    create_file("tweets.xlsx", twitter_tweets)
+	print("Authenticating ....")
+	twitter_auth = auth_twitter()
+	print("Authenticated.")
+
+
+	twitter_api = get_api(twitter_auth)
+
+	print("Fetching tweets....")
+
+	"""
+		Fetching 2000 tweets
+	"""
+	max_tweets = 2000
+	twitter_tweets = get_public_tweets(twitter_api, search_query, max_tweets)
+	print("Fetched.")
+
+	# print("Tweets locations")
+	# dissplay_tweets(twitter_tweets)
+
+
+	print("Creating xlsx sheet.....")
+	create_file("tweets.xlsx", twitter_tweets)
+	print("File created and data saved successfully.")
+
+	since = datetime(2019, 11, 17, 0, 0, 0)
+	until = datetime(2019, 11, 24, 0, 0, 0)
+
+	days = 7
+
+	print("Counting tweets of each day of week 17th - 24th Nov")
+	count_per_day, date_list = get_tweet_count_date(twitter_api, 'jnu', 1000, since, days)
+	print("Tweets counted.")
+	
+	data_df = {
+		'Date' : date_list, 
+		'Tweet_Count': count_per_day
+	}
+	
+	count_per_day_df = pd.DataFrame(data_df)
+
+	print("Saving data to count_per_day_df.pkl file")
+	pd.to_pickle(count_per_day_df, './count_per_day_df.pkl')
+	print("Data Saved.")
