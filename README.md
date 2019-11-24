@@ -17,3 +17,8 @@ I fetched around 300 unique tweets for below hashtags:
 
 **Screenshot**
 
+![tweets_per_day](https://user-images.githubusercontent.com/8282374/69496607-fcd9d000-0ef9-11ea-9847-e06b6d0cd85e.png)
+
+</br>
+
+![tweets_sentiments](https://user-images.githubusercontent.com/8282374/69496608-fea39380-0ef9-11ea-8000-b067425d3c2f.png)
